@@ -1,13 +1,14 @@
 # 从一个失败签名到协议漂移
 
+<!-- markdownlint-disable MD013 -->
+
 三个相互独立的小工具，如何为 DeepSeek Harness 形成一条证据驱动的可靠性链路。
 
 [English](CASE_STUDY.md)
 
 ## 产品问题
 
-DeepSeek Harness 的核心理念是“几乎万物皆插件”。开放性带来了巨大的扩展空间，
-也带来了一个可靠性问题：当一个 Profile 出错时，失败究竟来自哪里？
+DeepSeek Harness 的核心理念是“几乎万物皆插件”。开放性带来了巨大的扩展空间，也带来了一个可靠性问题：当一个 Profile 出错时，失败究竟来自哪里？
 
 它可能是：
 
@@ -15,24 +16,15 @@ DeepSeek Harness 的核心理念是“几乎万物皆插件”。开放性带来
 - 多个社区插件之间的相互作用；
 - 官方集成内部发生了协议漂移。
 
-如果把这三类问题全部塞进一个宽泛的“万能诊断器”，工具很容易依靠猜测给结论。
-因此我选择做三个边界清晰的小项目：每个项目只负责一层，并且在其他层损坏时
-仍然能够工作。
+如果把这三类问题全部塞进一个宽泛的“万能诊断器”，工具很容易依靠猜测给结论。因此我选择做三个边界清晰的小项目：每个项目只负责一层，并且在其他层损坏时仍然能够工作。
 
 ## 1. 识别一个已经复现的失败
 
-第一个项目来自 Windows 上一次真实的 DeepSeek Harness Web 结果。测试命令最终
-出现了 `spawn EPERM` 堆栈，但界面无法清楚区分“沙箱基础设施边界”和
-“测试断言失败”。
+第一个项目来自 Windows 上一次真实的 DeepSeek Harness Web 结果。测试命令最终出现了 `spawn EPERM` 堆栈，但界面无法清楚区分“沙箱基础设施边界”和“测试断言失败”。
 
-[`dsh-failure-lens`](https://github.com/ArmyWas/dsh-failure-lens)
-只识别一个高置信度签名。四个精确标记必须同时出现在同一个工具结果块中，并且
-这个结果块必须包含可持久验证的失败证据：错误标记或非零退出码。它不会跨多个
-结果块拼接证据，不会重新执行命令，不会修改会话，也不会发送遥测。
+[`dsh-failure-lens`](https://github.com/ArmyWas/dsh-failure-lens) 只识别一个高置信度签名。四个精确标记必须同时出现在同一个工具结果块中，并且这个结果块必须包含可持久验证的失败证据：错误标记或非零退出码。它不会跨多个结果块拼接证据，不会重新执行命令，不会修改会话，也不会发送遥测。
 
-这个窄边界非常重要：如果一个成功命令只是打印了历史 EPERM 堆栈，它必须保持为
-“不匹配”。官方讨论中的一次外部源码级审查帮助项目进一步收紧了证据边界，
-但没有趁机扩展到尚未实际观察到的 TLS 或临时目录失败。
+这个窄边界非常重要：如果一个成功命令只是打印了历史 EPERM 堆栈，它必须保持为“不匹配”。官方讨论中的一次外部源码级审查帮助项目进一步收紧了证据边界，但没有趁机扩展到尚未实际观察到的 TLS 或临时目录失败。
 
 它因此是一个真实的 Harness 客户端插件，但不是“万能分类器”。任何新增签名都必须先有新的现场证据。
 
@@ -40,39 +32,23 @@ DeepSeek Harness 的核心理念是“几乎万物皆插件”。开放性带来
 
 分类器可以解释已知失败，却无法回答另一个问题：究竟是哪个插件，或者哪组插件相互作用，导致 Profile 损坏？
 
-[`dsh-plugin-reducer`](https://github.com/ArmyWas/dsh-plugin-reducer)
-把 Delta Debugging 用到这个问题上。它在一次性影子 Profile 中运行候选组合，
-最终返回一个 **1-minimal** 复现集合：剩余集合中的任何候选只要再删除一个，
-用户提供的失败判定就不再复现。
+[`dsh-plugin-reducer`](https://github.com/ArmyWas/dsh-plugin-reducer) 把 Delta Debugging 用到这个问题上。它在一次性影子 Profile 中运行候选组合，最终返回一个 **1-minimal** 复现集合：剩余集合中的任何候选只要再删除一个，用户提供的失败判定就不再复现。
 
-它被刻意设计成外部 CLI。如果把缩减器放进它需要诊断的插件树中，那么插件组合
-损坏时，诊断器自己也可能一起消失。外部运行还能保护真实 Profile，并生成经过
-脱敏的机器可读报告，用户不需要公开整份本地配置。
+它被刻意设计成外部 CLI。如果把缩减器放进它需要诊断的插件树中，那么插件组合损坏时，诊断器自己也可能一起消失。外部运行还能保护真实 Profile，并生成经过脱敏的机器可读报告，用户不需要公开整份本地配置。
 
-项目不会把 1-minimal 错称为“全局最小”。`v0.3.1` 目前仍处于 npm `next`
-渠道；稳定版升级门槛是三份独立且经过隐私审查的真实 Profile 报告，当前为
-`0/3`。这是明确的产品约束，而不是缺少更多功能。
+项目不会把 1-minimal 错称为“全局最小”。`v0.3.1` 目前仍处于 npm `next` 渠道；稳定版升级门槛是三份独立且经过隐私审查的真实 Profile 报告，当前为 `0/3`。这是明确的产品约束，而不是缺少更多功能。
 
 ## 3. 在猜测之前检测集成漂移
 
 第三个项目不是从功能脑暴开始，而是来自一次受控差异实验。
 
-在 2026-08-25，官方 Harness Codex 适配器固定使用 Codex `0.147.0`，而当时的
-目标版本已经是 `0.149.1`。新版协议增加了字符串错误类型
-`misalignmentPolicyViolation`，固定版本的适配器没有映射该值，因此会把它
-降级成 `unknown`。
+在 2026-08-25，官方 Harness Codex 适配器固定使用 Codex `0.147.0`，而当时的目标版本已经是 `0.149.1`。新版协议增加了字符串错误类型 `misalignmentPolicyViolation`，固定版本的适配器没有映射该值，因此会把它降级成 `unknown`。
 
 启动、握手、审批、取消和进程清理仍然可能全部正常，所以常规冒烟测试无法发现这种诊断含义的静默丢失。
 
-[`dsh-codex-compat-canary`](https://github.com/ArmyWas/dsh-codex-compat-canary)
-不执行 Harness 源码，而是读取官方适配器，通过官方 Codex CLI 生成固定版本和
-目标版本的 Schema，再比较适配器明确消费的协议值。它会生成可复现的 JSON
-报告；已实现的破坏性检查失败时，进程按设计返回非零退出码。
+[`dsh-codex-compat-canary`](https://github.com/ArmyWas/dsh-codex-compat-canary) 不执行 Harness 源码，而是读取官方适配器，通过官方 Codex CLI 生成固定版本和目标版本的 Schema，再比较适配器明确消费的协议值。它会生成可复现的 JSON 报告；已实现的破坏性检查失败时，进程按设计返回非零退出码。
 
-这次真实发现已经记录在
-[官方兼容性讨论](https://github.com/deepseek-ai/deepseek-harness/discussions/4531)
-中。每周工作流会继续运行已发布版本，因此即使官方没有回复，上游修复或新的漂移
-仍然可以被观察到。
+这次真实发现已经记录在[官方兼容性讨论](https://github.com/deepseek-ai/deepseek-harness/discussions/4531)中。每周工作流会继续运行已发布版本，因此即使官方没有回复，上游修复或新的漂移仍然可以被观察到。
 
 ## 可靠性链路
 
@@ -96,9 +72,7 @@ DeepSeek Harness 的核心理念是“几乎万物皆插件”。开放性带来
 
 ## 发布与验证纪律
 
-三个项目的发布流程根据各自边界包含跨平台 CI、机器可读报告、全新环境安装验证、
-公开 Release 以及明确的反馈门槛。仓库和官方讨论会区分哪些内容已经观察到、
-哪些属于推断、哪些仍然未知。
+三个项目的发布流程根据各自边界包含跨平台 CI、机器可读报告、全新环境安装验证、公开 Release 以及明确的反馈门槛。仓库和官方讨论会区分哪些内容已经观察到、哪些属于推断、哪些仍然未知。
 
 我希望继续遵循这套生命周期：
 
@@ -111,12 +85,8 @@ DeepSeek Harness 的核心理念是“几乎万物皆插件”。开放性带来
 
 ## 如何参与验证
 
-- 如果你自然遇到相同的 Windows `spawn EPERM` 失败，可以向
-  [Failure Lens 现场报告 Issue](https://github.com/ArmyWas/dsh-failure-lens/issues/10)
-  提交经过隐私审查的结果。
-- 如果一个社区插件 Profile 出现故障，可以尝试 Reducer 的 `next` 版本，并通过
-  它的[现场报告入口](https://github.com/ArmyWas/dsh-plugin-reducer/issues/8)
-  分享脱敏结果。
+- 如果你自然遇到相同的 Windows `spawn EPERM` 失败，可以向 [Failure Lens 现场报告 Issue](https://github.com/ArmyWas/dsh-failure-lens/issues/10) 提交经过隐私审查的结果。
+- 如果一个社区插件 Profile 出现故障，可以尝试 Reducer 的 `next` 版本，并通过它的[现场报告入口](https://github.com/ArmyWas/dsh-plugin-reducer/issues/8)分享脱敏结果。
 - 如果 Codex Canary 发现新的漂移，请附上生成的 JSON 报告，而不是只提供截图或没有固定版本的描述。
 
 三个项目都是独立维护、非官方的社区项目。
