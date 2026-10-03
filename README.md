@@ -35,10 +35,10 @@ sandbox `spawn EPERM` signature in context. It does not rerun commands, change
 the session, send telemetry, or infer beyond the evidence in one tool-result
 block.
 
-- **Status:** stable `v0.2.2`, intentionally limited to one reproduced signature
+- **Status:** stable `v0.3.0`, intentionally limited to one reproduced signature
 - **Best for:** distinguishing a sandbox boundary from a test assertion failure
 - [npm](https://www.npmjs.com/package/dsh-failure-lens)
-  · [Release](https://github.com/ArmyWas/dsh-failure-lens/releases/tag/v0.2.2)
+  · [Release](https://github.com/ArmyWas/dsh-failure-lens/releases/tag/v0.3.0)
   · [Official community discussion](https://github.com/deepseek-ai/deepseek-harness/discussions/3193)
   · [Field-report gate](https://github.com/ArmyWas/dsh-failure-lens/issues/10)
 
@@ -77,11 +77,11 @@ An external compatibility canary that detects Codex App Server protocol drift
 the pinned Harness adapter cannot safely interpret. The first live experiment
 found a concrete error-union value that degrades to `unknown`.
 
-- **Status:** public `v0.1.0`; weekly live monitoring is active
+- **Status:** public `v0.2.0`; weekly live monitoring is active
 - **Best for:** turning dependency drift into a reproducible report before it is
   mistaken for a model or user failure
 - [npm](https://www.npmjs.com/package/dsh-codex-compat-canary)
-  · [Release](https://github.com/ArmyWas/dsh-codex-compat-canary/releases/tag/v0.1.0)
+  · [Release](https://github.com/ArmyWas/dsh-codex-compat-canary/releases/tag/v0.2.0)
   · [Official compatibility report](https://github.com/deepseek-ai/deepseek-harness/discussions/4531)
   · [Current canary finding](https://github.com/ArmyWas/dsh-codex-compat-canary/issues/1)
 
